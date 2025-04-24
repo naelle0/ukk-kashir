@@ -55,7 +55,7 @@
                                 </div>
                                 <div class="d-flex justify-content-between">
                                     <a href="{{ route('sales.index') }}" class="btn btn-secondary">Kembali</a>
-                                    <button type="submit" class="btn btn-secondary">Tambah Penjualan</button>
+                                    <button type="submit" class="btn btn-primary">Tambah Penjualan</button>
                                 </div>
                             </form>
                         </div>

@@ -11,6 +11,7 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
+        $users = User::all();
         if (Auth::user()->role != 'superadmin') {
             abort(403, 'Tidak Memiliki Akses!');
         }
@@ -18,12 +19,12 @@ class UserController extends Controller
         if ($request->has('search') && $request->search !== null) {
             $search = strtolower($request->search);
             $users = User::whereRaw('LOWER(name) LIKE ?', ['%'.$search.'%'])
+                ->orderByRaw('LOWER(name) ASC')
                 ->paginate(10)
                 ->appends($request->only('search'));
         } else {
-            $users = User::paginate(10);
+            $users = User::orderByRaw('LOWER(name) ASC')->paginate(10);
         }
-
         return view('superadmin.user.index', compact('users'));
     }
 

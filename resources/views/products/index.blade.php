@@ -29,6 +29,9 @@
                                     <a href="{{ route('products.create') }}" class="btn btn-success ml-2 p-2">
                                         Create Product
                                     </a>
+                                    <a href="{{ route('produk.export') }}" class="btn btn-gray ml-2 p-2">
+                                        Export Excel
+                                    </a>  
                                 @endif
                             </div>
                         </div>
@@ -51,12 +54,17 @@
                                         <td>{{ $products->firstItem() + $index }}</td>
                                         <td>{{ $item->name }}</td>
                                         <td class="text-center">
-                                            <img src="{{ asset('storage/' . $item->image) }}" width="100">
+                                            @if ($item->image)
+                                            <img src="{{ asset('storage/' . $item->image) }}" alt="{{ $item->name }}" width="80">
+                                            @else
+                                                <span class="text-muted">Tidak ada gambar</span>
+                                            @endif
                                         </td>
                                         <td>{{ 'Rp ' . number_format($item->price, 0, ',', '.') }}</td>
                                         <td>{{ $item->quantity }}</td>
                                         @if(Auth::user()->role == 'superadmin')
                                             <td class="text-center">
+                                                <a href="{{ route('products.edit', $item->id) }}" class="btn btn-primary">Edit</a>
                                                 <button type="button" class="btn btn-secondary edit-stock-btn"
                                                     data-id="{{ $item->id }}" data-name="{{ $item->name }}"
                                                     data-quantity="{{ $item->quantity }}" data-toggle="modal"

@@ -37,7 +37,6 @@
                                         <h5>Produk yang Dibeli</h5>
                                         <ul class="list-group">
                                             @foreach ($products as $key => $product)
-                                            dd)
                                                 <li class="list-group-item">
                                                     <strong>{{ $key + 1 . '. ' . $product->name}}</strong>
                                                     <br>Harga: Rp {{ number_format($product->price, 0, ',', '.') }}
@@ -89,10 +88,9 @@
                                         </div>
                                     </div>
                                 </div>
-
                                 <div class="d-flex justify-content-between">
                                     <a href="{{ route('sales.create') }}" class="btn btn-secondary">Back</a>
-                                    <button type="submit" class="btn btn-secondary">Tambah Penjualan</button>
+                                    <button type="submit" class="btn btn-primary">Tambah Penjualan</button>
                                 </div>
                             </form>
                         </div>

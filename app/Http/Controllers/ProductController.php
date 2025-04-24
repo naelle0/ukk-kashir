@@ -10,6 +10,7 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
+        $products = Product::all();
         if ($request->has('search') && $request->search !== null) {
             $search = strtolower($request->search);
             $products = Product::whereRaw('LOWER(name) LIKE ?', ['%'.$search.'%'])
@@ -41,7 +42,7 @@ class ProductController extends Controller
         $price = $request->price;
         $discount = $request->discount;
     
-        // Hitung harga akhir jika ada diskon
+
         if ($discount && $discount > 0) {
             $price = $price - ($price * ($discount / 100));
         }

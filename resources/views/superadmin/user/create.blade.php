@@ -61,7 +61,7 @@
                                     <a href="{{ route('user.index') }}" class="btn btn-secondary">
                                         Back
                                     </a>
-                                    <button type="submit" class="btn btn-secondary">
+                                    <button type="submit" class="btn btn-primary">
                                         Create User
                                     </button>
                                 </div>

@@ -53,7 +53,7 @@ class SalesExport implements FromCollection, WithHeadings, WithMapping
             $id,
             $sale->invoice_number,
             $sale->customer_name,
-            $sale->created_at->format('d-m-Y H:i'),
+            $sale->created_at->format('d-m-Y'),
             json_encode($productData, JSON_UNESCAPED_UNICODE),
             'Rp ' . number_format($sale->total_amount, 0, ',', '.'),
             'Rp ' . number_format($sale->payment_amount, 0, ',', '.'),

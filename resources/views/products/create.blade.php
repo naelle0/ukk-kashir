@@ -54,7 +54,7 @@
                                 <div class="form-group mb-3">
                                     <label for="discount">Diskon (%)</label>
                                     <input type="number" class="form-control" name="discount" id="discount" placeholder="%" value="{{ old('discount') }}" min="0" max="100">
-                                    <small class="text-muted">Boleh dikosongkan jika tidak ada diskon</small>
+                                    <small class="text-muted">Dikosongkan jika tidak ada diskon</small>
                                 </div>
                                 
 

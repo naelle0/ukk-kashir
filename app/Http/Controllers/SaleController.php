@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\Member;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class SaleController extends Controller
@@ -15,7 +16,7 @@ class SaleController extends Controller
     {
         if ($request->has('search') && $request->search !== null) {
             $search = strtolower($request->search);
-            $sales = Sale::whereRaw('LOWER(invoice_number) LIKE ?', ['%' . $search . '%'])
+            $sales = Sale::whereRaw('LOWER(customer_name) LIKE ?', ['%' . $search . '%'])
                 ->paginate(10)
                 ->appends($request->only('search'));
         } else {
@@ -87,9 +88,10 @@ class SaleController extends Controller
 
         // Pastikan total_pay lebih besar atau sama dengan total_amount
         if ($totalPay < $totalAmount) {
-            return redirect()->back()->withErrors(['total_pay' => 'Jumlah bayar harus lebih besar atau sama dengan total: Rp ' . number_format($totalAmount, 0, ',', '.')]);
+            return redirect()->route('sales.create')
+                ->withErrors(['total_pay' => 'Jumlah bayar harus lebih besar atau sama dengan total: Rp ' . number_format($totalAmount, 0, ',', '.')])
+                ->withInput();
         }
-
         // Validasi member jika is_member dipilih
         if ($request->is_member == 'yes' && empty($request->member_id)) {
             return redirect()->back()->withErrors(['member_id' => 'Silakan pilih member terlebih dahulu']);
@@ -133,52 +135,60 @@ class SaleController extends Controller
         $discount = 0;
         $memberPoint = 0;
 
-        if ($member && $request->use_point == 1) {
-            $totalPoint = floatval($request->total_point);
-            if ($totalPoint > $member->points) {
-                return redirect()->back()->withErrors(['total_point' => 'Poin member tidak cukup']);
+        DB::beginTransaction();
+        try {
+            if ($member && $request->use_point == 1) {
+                $totalPoint = floatval($request->total_point);
+                if ($totalPoint > $member->points) {
+                    return redirect()->back()->withErrors(['total_point' => 'Poin member tidak cukup']);
+                }
+                $totalAmount = $totalAmount - $totalPoint;
+                $discount = $totalPoint;
+                $memberPoint = -$totalPoint;
+                Member::where('id', $memberId)->decrement('points', $totalPoint);
+            } else {
+                $addPoint = floor($totalAmount / 100);
+                if ($member) {
+                    $memberPoint = $addPoint;
+                    Member::where('id', $memberId)->increment('points', $addPoint);
+                }
             }
-            $totalAmount = $totalAmount - $totalPoint;
-            $discount = $totalPoint;
-            $memberPoint = -$totalPoint;
-            Member::where('id', $memberId)->decrement('points', $totalPoint);
-        } else {
-            $addPoint = floor($totalAmount / 750);
-            if ($member) {
-                $memberPoint = $addPoint;
-                Member::where('id', $memberId)->increment('points', $addPoint);
+
+            // Simpan data penjualan
+            $sale = Sale::create([
+                'id' => Str::uuid(),
+                'invoice_number' => $invoiceNumber,
+                'customer_name' => $memberName,
+                'user_id' => Auth::user()->id,
+                'member_id' => $memberId,
+                'product_data' => json_encode($productData),
+                'total_amount' => $totalAmount,
+                'payment_amount' => $totalPay,
+                'change_amount' => $totalPay - $totalAmount,
+                'notes' => '-',
+            ]);
+
+            // Kurangi stok produk
+            foreach ($productData as $product) {
+                Product::where('id', $product['id'])->decrement('quantity', $product['quantity']);
             }
+
+            DB::commit();
+
+            return view('sales.invoice', compact(
+                'invoiceNumber',
+                'totalAmount',
+                'totalPay',
+                'memberName',
+                'memberId',
+                'productData',
+                'discount',
+                'memberPoint'
+            ));
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()->withErrors(['error' => 'Terjadi kesalahan saat menyimpan data penjualan. Silakan coba lagi.']);
         }
-
-        // Simpan data penjualan
-        $sale = Sale::create([
-            'id' => Str::uuid(),
-            'invoice_number' => $invoiceNumber,
-            'customer_name' => $memberName,
-            'user_id' => Auth::user()->id,
-            'member_id' => $memberId,
-            'product_data' => json_encode($productData),
-            'total_amount' => $totalAmount,
-            'payment_amount' => $totalPay,
-            'change_amount' => $totalPay - $totalAmount,
-            'notes' => '-',
-        ]);
-
-        // Kurangi stok produk
-        foreach ($productData as $product) {
-            Product::where('id', $product['id'])->decrement('quantity', $product['quantity']);
-        }
-
-        return view('sales.invoice', compact(
-            'invoiceNumber',
-            'totalAmount',
-            'totalPay',
-            'memberName',
-            'memberId',
-            'productData',
-            'discount',
-            'memberPoint'
-        ));
     }
 
     public function showInvoice($id)
